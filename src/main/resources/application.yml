@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: "project-RBPO"
+  datasource:
+    url: jdbc:postgresql://localhost:5432/online_store
+    username: ${PG_USER}
+    password: ${PG_PASS}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    open-in-view: false
+  sql:
+    init:
+      mode: always
+server:
+  port: 8080

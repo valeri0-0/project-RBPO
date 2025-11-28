@@ -1,41 +1,78 @@
 package com.valeri.project_RBPO.controller;
 
-import com.valeri.project_RBPO.model.Product;
+import com.valeri.project_RBPO.entity.Product;
 import com.valeri.project_RBPO.service.ProductService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.valeri.project_RBPO.model.ProductDto;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/products")
-public class ProductController {
+@RequiredArgsConstructor
+public class ProductController
+{
+    private final ProductService productService;
 
-    @Autowired
-    private ProductService productService;
-
+    // Получить все товары
     @GetMapping
-    public List<Product> getAllProducts() {
-        return productService.getAllProducts();
+    public ResponseEntity<List<Product>> getAllProducts()
+    {
+        return ResponseEntity.ok(productService.getAllProducts());
     }
 
+     // Получить товар по ID
     @GetMapping("/{id}")
-    public Product getProductById(@PathVariable Long id) {
-        return productService.getProductById(id);
+    public ResponseEntity<Product> getProductById(@PathVariable UUID id)
+    {
+        Product product = productService.getProductById(id);
+        return product != null ? ResponseEntity.ok(product) : ResponseEntity.notFound().build();
     }
 
+    // Создать новый товар
     @PostMapping
-    public Product createProduct(@RequestBody Product product) {
-        return productService.createProduct(product);
+    public ResponseEntity<Object> createProduct(@RequestBody ProductDto productDto)
+    {
+        try {
+            Product product = productService.createProduct(productDto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(product);
+        } catch (RuntimeException e)
+        {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
+    // Обновить товар
     @PutMapping("/{id}")
-    public Product updateProduct(@PathVariable Long id, @RequestBody Product product) {
-        return productService.updateProduct(id, product);
+    public ResponseEntity<Object> updateProduct(@PathVariable UUID id, @RequestBody ProductDto productDto)
+    {
+        try {
+            Product product = productService.updateProduct(id, productDto);
+            return ResponseEntity.ok(product);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
+    // Удалить товар
     @DeleteMapping("/{id}")
-    public String deleteProduct(@PathVariable Long id) {
-        boolean deleted = productService.deleteProduct(id);
-        return deleted ? "Товар удален" : "Товар не найден";
+    public ResponseEntity<Void> deleteProduct(@PathVariable UUID id)
+    {
+        return productService.deleteProduct(id) ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+    }
+
+     // Получить товары по категории
+    @GetMapping("/category/{categoryId}")
+    public ResponseEntity<List<Product>> getProductsByCategory(@PathVariable UUID categoryId)
+    {
+        return ResponseEntity.ok(productService.getProductsByCategory(categoryId));
+    }
+
+    // Поиск товаров по названию
+    @GetMapping("/search")
+    public ResponseEntity<List<Product>> searchProducts(@RequestParam String name) {
+        return ResponseEntity.ok(productService.searchProducts(name));
     }
 }

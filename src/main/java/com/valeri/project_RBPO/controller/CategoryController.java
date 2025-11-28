@@ -1,41 +1,68 @@
 package com.valeri.project_RBPO.controller;
 
-import com.valeri.project_RBPO.model.Category;
+import com.valeri.project_RBPO.entity.Category;
 import com.valeri.project_RBPO.service.CategoryService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.valeri.project_RBPO.model.CategoryDto;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
+import java.util.*;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/categories")
-public class CategoryController {
+@RequiredArgsConstructor
+public class CategoryController
+{
+    private final CategoryService categoryService;
 
-    @Autowired
-    private CategoryService categoryService;
-
+    // Получить все категории
     @GetMapping
-    public List<Category> getAllCategories() {
-        return categoryService.getAllCategories();
+    public ResponseEntity<List<Category>> getAllCategories()
+    {
+        return ResponseEntity.ok(categoryService.getAllCategories());
     }
 
+    // Получить категорию по ID
     @GetMapping("/{id}")
-    public Category getCategoryById(@PathVariable Long id) {
-        return categoryService.getCategoryById(id);
+    public ResponseEntity<Category> getCategoryById(@PathVariable UUID id)
+    {
+        Category category = categoryService.getCategoryById(id);
+        return category != null ? ResponseEntity.ok(category) : ResponseEntity.notFound().build();
     }
 
+    // Создать новую категорию
     @PostMapping
-    public Category createCategory(@RequestBody Category category) {
-        return categoryService.createCategory(category);
+    public ResponseEntity<?> createCategory(@RequestBody CategoryDto categoryDto)
+    {
+        try
+        {
+            return ResponseEntity.status(HttpStatus.CREATED).body(categoryService.createCategory(categoryDto));
+        } catch (RuntimeException e)
+        {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
+    // Обновить категорию
     @PutMapping("/{id}")
-    public Category updateCategory(@PathVariable Long id, @RequestBody Category category) {
-        return categoryService.updateCategory(id, category);
+    public ResponseEntity<Category> updateCategory(@PathVariable UUID id, @RequestBody CategoryDto categoryDto)
+    {
+        Category category = categoryService.updateCategory(id, categoryDto);
+        return category != null ? ResponseEntity.ok(category) : ResponseEntity.notFound().build();
     }
 
+    // Удалить категорию
     @DeleteMapping("/{id}")
-    public String deleteCategory(@PathVariable Long id) {
-        boolean deleted = categoryService.deleteCategory(id);
-        return deleted ? "Категория удалена" : "Категория не найдена";
+    public ResponseEntity<Void> deleteCategory(@PathVariable UUID id)
+    {
+        return categoryService.deleteCategory(id) ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+    }
+
+    // Получить категорию по имени
+    @GetMapping("/name/{name}")
+    public ResponseEntity<Category> getCategoryByName(@PathVariable String name) {
+        Category category = categoryService.getCategoryByName(name);
+        return category != null ? ResponseEntity.ok(category) : ResponseEntity.notFound().build();
     }
 }

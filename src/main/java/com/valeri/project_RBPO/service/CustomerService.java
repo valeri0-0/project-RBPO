@@ -1,41 +1,76 @@
 package com.valeri.project_RBPO.service;
 
-import com.valeri.project_RBPO.model.Customer;
+import com.valeri.project_RBPO.entity.Customer;
 import org.springframework.stereotype.Service;
+import com.valeri.project_RBPO.model.CustomerDto;
+import com.valeri.project_RBPO.repository.CustomerRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 
 @Service
-public class CustomerService {
-    private List<Customer> customers = new ArrayList<>();
-    private Long nextId = 1L;
+@RequiredArgsConstructor
+@Transactional
 
-    public List<Customer> getAllCustomers() {
-        return new ArrayList<>(customers);
+public class CustomerService
+{
+    private final CustomerRepository customerRepository;
+
+    @Transactional(readOnly = true)
+    public List<Customer> getAllCustomers()
+    {
+        return customerRepository.findAll();
     }
 
-    public Customer getCustomerById(Long id) {
-        return customers.stream()
-                .filter(c -> c.getId().equals(id))
-                .findFirst()
-                .orElse(null);
+    @Transactional(readOnly = true)
+    public Customer getCustomerById(UUID id)
+    {
+        return customerRepository.findById(id).orElse(null);
     }
 
-    public Customer createCustomer(Customer customer) {
-        customer.setId(nextId++);
-        customers.add(customer);
-        return customer;
-    }
-
-    public Customer updateCustomer(Long id, Customer customerDetails) {
-        Customer customer = getCustomerById(id);
-        if (customer != null) {
-            customer.setName(customerDetails.getName());
-            customer.setEmail(customerDetails.getEmail());
+    public Customer createCustomer(CustomerDto customerDto)
+    {
+        if (customerRepository.findByEmail(customerDto.getEmail()) != null)
+        {
+            throw new RuntimeException("Покупатель с электронной почтой '" + customerDto.getEmail() + "' уже существует");
         }
-        return customer;
+        Customer customer = new Customer();
+        customer.setName(customerDto.getName());
+        customer.setEmail(customerDto.getEmail());
+        return customerRepository.save(customer);
     }
 
-    public boolean deleteCustomer(Long id) {
-        return customers.removeIf(c -> c.getId().equals(id));
+    public Customer updateCustomer(UUID id, CustomerDto customerDto)
+    {
+        Customer customer = customerRepository.findById(id).orElse(null);
+        if (customer != null)
+        {
+            Customer existingCustomer = customerRepository.findByEmail(customerDto.getEmail());
+            if (existingCustomer != null && !existingCustomer.getId().equals(id))
+            {
+                throw new RuntimeException("Email '" + customerDto.getEmail() + "' уже используется другим клиентом");
+            }
+            customer.setName(customerDto.getName());
+            customer.setEmail(customerDto.getEmail());
+            return customerRepository.save(customer);
+        }
+        return null;
     }
+
+    public boolean deleteCustomer(UUID id)
+    {
+        if (customerRepository.existsById(id))
+        {
+            customerRepository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+
+    @Transactional(readOnly = true)
+    public Customer getCustomerByEmail(String email)
+    {
+        return customerRepository.findByEmail(email);
+    }
+
 }

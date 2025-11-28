@@ -1,40 +1,65 @@
 package com.valeri.project_RBPO.service;
 
-import com.valeri.project_RBPO.model.Category;
+import com.valeri.project_RBPO.entity.Category;
 import org.springframework.stereotype.Service;
+import com.valeri.project_RBPO.model.CategoryDto;
+import com.valeri.project_RBPO.repository.CategoryRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class CategoryService {
-    private List<Category> categories = new ArrayList<>();
-    private Long nextId = 1L;
+    private final CategoryRepository categoryRepository;
 
-    public List<Category> getAllCategories() {
-        return new ArrayList<>(categories);
+    @Transactional(readOnly = true)
+    public List<Category> getAllCategories()
+    {
+        return categoryRepository.findAll();
     }
 
-    public Category getCategoryById(Long id) {
-        return categories.stream()
-                .filter(c -> c.getId().equals(id))
-                .findFirst()
-                .orElse(null);
+    @Transactional(readOnly = true)
+    public Category getCategoryById(UUID id)
+    {
+        return categoryRepository.findById(id).orElse(null);
     }
 
-    public Category createCategory(Category category) {
-        category.setId(nextId++);
-        categories.add(category);
-        return category;
-    }
-
-    public Category updateCategory(Long id, Category categoryDetails) {
-        Category category = getCategoryById(id);
-        if (category != null) {
-            category.setName(categoryDetails.getName());
+    public Category createCategory(CategoryDto categoryDto)
+    {
+        if (categoryRepository.findByName(categoryDto.getName()) != null)
+        {
+            throw new RuntimeException("Категория с названием '" + categoryDto.getName() + "' уже существует");
         }
-        return category;
+        Category category = new Category();
+        category.setName(categoryDto.getName());
+        return categoryRepository.save(category);
     }
 
-    public boolean deleteCategory(Long id) {
-        return categories.removeIf(c -> c.getId().equals(id));
+    public Category updateCategory(UUID id, CategoryDto categoryDto)
+    {
+        Category category = categoryRepository.findById(id).orElse(null);
+        if (category != null) {
+            category.setName(categoryDto.getName());
+            return categoryRepository.save(category);
+        }
+        return null;
+    }
+
+    public boolean deleteCategory(UUID id)
+    {
+        if (categoryRepository.existsById(id))
+        {
+            categoryRepository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+
+    @Transactional(readOnly = true)
+    public Category getCategoryByName(String name)
+    {
+        return categoryRepository.findByName(name);
     }
 }

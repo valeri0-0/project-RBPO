@@ -1,41 +1,69 @@
 package com.valeri.project_RBPO.controller;
 
-import com.valeri.project_RBPO.model.Customer;
+import com.valeri.project_RBPO.entity.Customer;
 import com.valeri.project_RBPO.service.CustomerService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.valeri.project_RBPO.model.CustomerDto;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/customers")
-public class CustomerController {
+@RequiredArgsConstructor
+public class CustomerController
+{
 
-    @Autowired
-    private CustomerService customerService;
+        private final CustomerService customerService;
 
-    @GetMapping
-    public List<Customer> getAllCustomers() {
-        return customerService.getAllCustomers();
-    }
+        // Получить всех покупателей
+        @GetMapping
+        public ResponseEntity<List<Customer>> getAllCustomers()
+        {
+            return ResponseEntity.ok(customerService.getAllCustomers());
+        }
 
-    @GetMapping("/{id}")
-    public Customer getCustomerById(@PathVariable Long id) {
-        return customerService.getCustomerById(id);
-    }
+        // Получить покупателя по ID
+        @GetMapping("/{id}")
+        public ResponseEntity<Customer> getCustomerById(@PathVariable UUID id)
+        {
+            Customer customer = customerService.getCustomerById(id);
+            return customer != null ? ResponseEntity.ok(customer) : ResponseEntity.notFound().build();
+        }
 
+    // Создать нового покупателя
     @PostMapping
-    public Customer createCustomer(@RequestBody Customer customer) {
-        return customerService.createCustomer(customer);
+    public ResponseEntity<?> createCustomer(@RequestBody CustomerDto customerDto) {
+        try {
+            return ResponseEntity.status(HttpStatus.CREATED).body(customerService.createCustomer(customerDto));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
+    // Обновить покупателя
     @PutMapping("/{id}")
-    public Customer updateCustomer(@PathVariable Long id, @RequestBody Customer customer) {
-        return customerService.updateCustomer(id, customer);
+    public ResponseEntity<?> updateCustomer(@PathVariable UUID id, @RequestBody CustomerDto customerDto) {
+        try {
+            Customer customer = customerService.updateCustomer(id, customerDto);
+            return customer != null ? ResponseEntity.ok(customer) : ResponseEntity.notFound().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
+    // Удалить покупателя
     @DeleteMapping("/{id}")
-    public String deleteCustomer(@PathVariable Long id) {
-        boolean deleted = customerService.deleteCustomer(id);
-        return deleted ? "Покупатель удален" : "Покупатель не найден";
+    public ResponseEntity<Void> deleteCustomer(@PathVariable UUID id)
+    {
+        return customerService.deleteCustomer(id) ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+    }
+
+    // Получить покупателя по email
+    @GetMapping("/email/{email}")
+    public ResponseEntity<Customer> getCustomerByEmail(@PathVariable String email) {
+        Customer customer = customerService.getCustomerByEmail(email);
+        return customer != null ? ResponseEntity.ok(customer) : ResponseEntity.notFound().build();
     }
 }

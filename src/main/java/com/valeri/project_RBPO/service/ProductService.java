@@ -1,42 +1,79 @@
 package com.valeri.project_RBPO.service;
 
-import com.valeri.project_RBPO.model.Product;
+import com.valeri.project_RBPO.entity.Product;
 import org.springframework.stereotype.Service;
+import com.valeri.project_RBPO.entity.Category;
+import com.valeri.project_RBPO.model.ProductDto;
+import com.valeri.project_RBPO.repository.CategoryRepository;
+import com.valeri.project_RBPO.repository.ProductRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 
 @Service
-public class ProductService {
-    private List<Product> products = new ArrayList<>();
-    private Long nextId = 1L;
+@RequiredArgsConstructor
+@Transactional
+public class ProductService
+{
+    private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
 
-    public List<Product> getAllProducts() {
-        return new ArrayList<>(products);
+    @Transactional(readOnly = true)
+    public List<Product> getAllProducts()
+    {
+        return productRepository.findAll();
     }
 
-    public Product getProductById(Long id) {
-        return products.stream()
-                .filter(p -> p.getId().equals(id))
-                .findFirst()
-                .orElse(null);
+    @Transactional(readOnly = true)
+    public Product getProductById(UUID id)
+    {
+        return productRepository.findById(id).orElse(null);
     }
 
-    public Product createProduct(Product product) {
-        product.setId(nextId++);
-        products.add(product);
-        return product;
+    public Product createProduct(ProductDto productDto)
+    {
+        Category category = categoryRepository.findById(productDto.getCategoryId()).orElseThrow(() ->
+                new RuntimeException("Категория не найдена с ID: " + productDto.getCategoryId()));
+
+        Product product = new Product();
+        product.setName(productDto.getName());
+        product.setPrice(productDto.getPrice());
+        product.setCategory(category);
+        return productRepository.save(product);
     }
 
-    public Product updateProduct(Long id, Product productDetails) {
-        Product product = getProductById(id);
-        if (product != null) {
-            product.setName(productDetails.getName());
-            product.setPrice(productDetails.getPrice());
-            product.setCategoryId(productDetails.getCategoryId());
+    public Product updateProduct(UUID id, ProductDto productDto)
+    {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Товар не найден с ID: " + id));
+        Category category = categoryRepository.findById(productDto.getCategoryId())
+                .orElseThrow(() -> new RuntimeException("Категория не найдена с ID: " + productDto.getCategoryId()));
+
+        product.setName(productDto.getName());
+        product.setPrice(productDto.getPrice());
+        product.setCategory(category);
+        return productRepository.save(product);
+    }
+
+    public boolean deleteProduct(UUID id)
+    {
+        if (productRepository.existsById(id))
+        {
+            productRepository.deleteById(id);
+            return true;
         }
-        return product;
+        return false;
     }
 
-    public boolean deleteProduct(Long id) {
-        return products.removeIf(p -> p.getId().equals(id));
+    @Transactional(readOnly = true)
+    public List<Product> getProductsByCategory(UUID categoryId)
+    {
+        return productRepository.findByCategoryId(categoryId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Product> searchProducts(String name)
+    {
+        return productRepository.findByNameContaining(name);
     }
 }
