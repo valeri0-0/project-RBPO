@@ -41,6 +41,19 @@ CREATE TABLE IF NOT EXISTS order_items
     price      DECIMAL(10, 2) NOT NULL CHECK (price >= 0)
 );
 
+-- Таблица пользователей
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL DEFAULT 'USER',
+    account_expired BOOLEAN NOT NULL DEFAULT FALSE,
+    account_locked BOOLEAN NOT NULL DEFAULT FALSE,
+    credentials_expired BOOLEAN NOT NULL DEFAULT FALSE,
+    disabled BOOLEAN NOT NULL DEFAULT FALSE
+);
+
 -- Индексы для улучшения производительности
 CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders (customer_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders (status);
