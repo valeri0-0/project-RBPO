@@ -54,8 +54,23 @@ CREATE TABLE IF NOT EXISTS users (
     disabled BOOLEAN NOT NULL DEFAULT FALSE
 );
 
+-- Таблица сессий пользователей (для хранения refresh-токенов)
+CREATE TABLE IF NOT EXISTS user_sessions
+(
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id       UUID         NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    refresh_token VARCHAR(512) NOT NULL UNIQUE,
+    status        VARCHAR(50)  NOT NULL,
+    expires_at    TIMESTAMP    NOT NULL,
+    issued_at     TIMESTAMP    NOT NULL,
+    revoked_at    TIMESTAMP
+);
+
+
 -- Индексы для улучшения производительности
 CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders (customer_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders (status);
 CREATE INDEX IF NOT EXISTS idx_products_category_id ON products (category_id);
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items (order_id);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions (user_id);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_refresh_token ON user_sessions (refresh_token);
