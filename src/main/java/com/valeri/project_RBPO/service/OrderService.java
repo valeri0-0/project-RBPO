@@ -64,6 +64,8 @@ public class OrderService
         order.setStatus("NEW");
         order = orderRepository.save(order);
 
+        List<OrderItem> orderItems = new ArrayList<>();
+
         for (OrderItemDto itemDto : items)
         {
             Product product = productRepository.findById(itemDto.getProductId())
@@ -74,10 +76,10 @@ public class OrderService
             orderItem.setProduct(product);
             orderItem.setQuantity(itemDto.getQuantity());
             orderItem.setPrice(product.getPrice());
-            orderItemRepository.save(orderItem);
+            orderItems.add(orderItem);
         }
-
-        return order;
+        order.setOrderItems(orderItems);
+        return orderRepository.save(order);
     }
 
     // Расчет суммы заказа
@@ -128,4 +130,26 @@ public class OrderService
     {
         return orderRepository.findByCustomerIdAndStatus(customerId, status);
     }
+
+    // Обновить заказ
+    public Order updateOrder(UUID id, OrderDto orderDto) {
+        Order order = orderRepository.findById(id).orElse(null);
+        if (order != null) {
+            // Если указан новый покупатель - обновляем
+            if (orderDto.getCustomerId() != null) {
+                Customer customer = customerRepository.findById(orderDto.getCustomerId())
+                        .orElseThrow(() -> new RuntimeException("Покупатель не найден с ID: " + orderDto.getCustomerId()));
+                order.setCustomer(customer);
+            }
+
+            // Если указан новый статус - обновляем
+            if (orderDto.getStatus() != null) {
+                order.setStatus(orderDto.getStatus());
+            }
+
+            return orderRepository.save(order);
+        }
+        return null;
+    }
+
 }

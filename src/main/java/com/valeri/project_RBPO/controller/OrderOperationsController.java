@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.UUID;
@@ -41,7 +42,7 @@ public class OrderOperationsController
 
     // Создать простой заказ
     @PostMapping
-    public ResponseEntity<?> createOrder(@RequestBody OrderDto orderDto)
+    public ResponseEntity<?> createOrder(@Valid @RequestBody OrderDto orderDto)
     {
         try {
             Order order = orderService.createOrder(orderDto);
@@ -136,4 +137,17 @@ public class OrderOperationsController
             @PathVariable String status) {
         return ResponseEntity.ok(orderService.getCustomerOrdersByStatus(customerId, status));
     }
+
+        // Обновить заказ
+        // Можно изменить покупателя и/или статус заказа
+        @PutMapping("/{id}")
+        public ResponseEntity<?> updateOrder(@PathVariable UUID id, @Valid @RequestBody OrderDto orderDto) {
+            try {
+                Order order = orderService.updateOrder(id, orderDto);
+                return order != null ? ResponseEntity.ok(order) : ResponseEntity.notFound().build();
+            } catch (RuntimeException e) {
+                return ResponseEntity.badRequest().body(e.getMessage());
+            }
+        }
+
 }

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.Modifying;
 
 @Repository
 public interface OrderItemRepository
@@ -17,4 +18,8 @@ public interface OrderItemRepository
 
     @Query("SELECT SUM(oi.quantity * oi.price) FROM OrderItem oi WHERE oi.order.id = :orderId")
     Double calculateOrderTotal(UUID orderId);
+
+    @Modifying
+    @Query(value = "DELETE FROM order_items WHERE id = ?1", nativeQuery = true)
+    int deleteByIdNative(UUID id);
 }

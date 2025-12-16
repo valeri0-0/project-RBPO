@@ -24,7 +24,7 @@ public class SecurityConfig
 {
 
     // Режим аутентификации
-    private static final boolean USE_JWT = true; // true = JWT, false = Basic Auth
+    private static final boolean USE_JWT = false; // true = JWT, false = Basic Auth
 
     // CSRF защита
     private static final boolean USE_CSRF = false; // true = CSRF включен, false = отключен
@@ -68,6 +68,7 @@ public class SecurityConfig
                         .requestMatchers("/api/products/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/api/customers/**").hasRole("ADMIN")
                         .requestMatchers("/api/categories/**").hasRole("ADMIN")
+                        .requestMatchers("/api/order-items/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .httpBasic(withDefaults());
@@ -88,6 +89,7 @@ public class SecurityConfig
                         .requestMatchers("/api/products/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/api/customers/**").hasRole("ADMIN")
                         .requestMatchers("/api/categories/**").hasRole("ADMIN")
+                        .requestMatchers("/api/order-items/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
