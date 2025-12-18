@@ -16,8 +16,14 @@ spring:
     init:
       mode: always
 
-server:
-  port: 8080
-
 jwt:
   secret-key: ${JWT_SECRET_KEY}
+
+server:
+  port: 8443
+  ssl:
+    enabled: true
+    key-store: ${SSL_KEYSTORE_PATH}
+    key-store-type: PKCS12
+    key-store-password: ${SSL_KEYSTORE_PASSWORD}
+    key-alias: valeriServer
